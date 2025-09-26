@@ -2,9 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3001;
+const JWT_SECRET = 'supersecretkey'; // In production, use env variable
 
 app.use(cors());
 app.use(express.json());
@@ -29,6 +32,18 @@ function saveUsers(users) {
     fs.writeFileSync(usersPath, JSON.stringify(users, null, 2));
 }
 
+// Middleware to verify JWT
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+}
+
 // POST /search-recipes
 // Expects: { ingredients: ["ingredient1", "ingredient2", ...] }
 app.post('/search-recipes', (req, res) => {
@@ -42,25 +57,8 @@ app.post('/search-recipes', (req, res) => {
     const matches = recipes.filter(recipe =>
         recipe.ingredients.every(ing => userIngredients.includes(ing))
     );
-    res.json(matches);
+	res.json(matches);
 });
-
-const bcrypt = require('bcryptjs');
-
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'supersecretkey'; // In production, use env variable
-
-// Middleware to verify JWT
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.sendStatus(401);
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
-    });
-}
 
 // POST /register
 // Expects: { username, password }
