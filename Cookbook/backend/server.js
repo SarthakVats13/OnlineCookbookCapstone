@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
@@ -46,18 +47,26 @@ function authenticateToken(req, res, next) {
 
 // POST /search-recipes
 // Expects: { ingredients: ["ingredient1", "ingredient2", ...] }
-app.post('/search-recipes', (req, res) => {
+app.post('/search-recipes', async (req, res) => {
     const userIngredients = req.body.ingredients || [];
     if (!Array.isArray(userIngredients) || userIngredients.length === 0) {
         return res.status(400).json({ error: 'No ingredients provided.' });
     }
 
-    const recipes = getRecipes();
-    // Find recipes where all required ingredients are in user's list
-    const matches = recipes.filter(recipe =>
-        recipe.ingredients.every(ing => userIngredients.includes(ing))
-    );
-	res.json(matches);
+    try {
+        // Spoonacular API call
+        const apiKey = '56a2b72f56cc4cecb8e63aab36dca08f';
+        const response = await axios.get('https://api.spoonacular.com/recipes/findByIngredients', {
+            params: {
+                ingredients: userIngredients.join(','),
+                number: 10,
+                apiKey: apiKey
+            }
+        });
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch recipes from Spoonacular.' });
+    }
 });
 
 // POST /register
@@ -106,34 +115,34 @@ app.post('/login', async (req, res) => {
 });
 
 // --- FAVORITES ---
-// GET /favorites (get user's favorites)
-app.get('/favorites', authenticateToken, (req, res) => {
+// GET /favorites (get favorites for demo: first user)
+app.get('/favorites', (req, res) => {
     const users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
+    const user = users[0];
     if (!user) return res.sendStatus(404);
     res.json({ favorites: user.favorites });
 });
 
 // POST /favorites (add a recipe to favorites)
-// Expects: { recipeId }
-app.post('/favorites', authenticateToken, (req, res) => {
-    const { recipeId } = req.body;
-    if (typeof recipeId !== 'number') return res.status(400).json({ error: 'recipeId required.' });
-    let users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) return res.sendStatus(404);
-    if (!user.favorites.includes(recipeId)) user.favorites.push(recipeId);
-    saveUsers(users);
-    res.json({ favorites: user.favorites });
-});
-
-// DELETE /favorites (remove a recipe from favorites)
-// Expects: { recipeId }
-app.delete('/favorites', authenticateToken, (req, res) => {
-    const { recipeId } = req.body;
-    if (typeof recipeId !== 'number') return res.status(400).json({ error: 'recipeId required.' });
-    let users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
+// Expects: { ...recipe }
+app.post('/favorites', (req, res) => {
+    const recipe = req.body;
+    if (!recipe || !recipe.recipeId) {
+        return res.status(400).json({ error: 'Full recipe object with recipeId required.' });
+    }
+    // Load users
+    const users = JSON.parse(fs.readFileSync('users.json'));
+    // For demo, just use first user
+    const user = users[0];
+    if (!user.favorites) user.favorites = [];
+    // Prevent duplicates
+    if (user.favorites.some(r => r.recipeId === recipe.recipeId)) {
+        return res.status(400).json({ error: 'Recipe already in favorites.' });
+    }
+    // Add full recipe object to favorites
+    user.favorites.push(recipe);
+    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
+    res.json({ success: true });
     if (!user) return res.sendStatus(404);
     user.favorites = user.favorites.filter(id => id !== recipeId);
     saveUsers(users);
@@ -152,23 +161,23 @@ app.get('/mealplan', authenticateToken, (req, res) => {
 // POST /mealplan (add a recipe to meal plan)
 // Expects: { recipeId }
 app.post('/mealplan', authenticateToken, (req, res) => {
-    const { recipeId } = req.body;
-    if (typeof recipeId !== 'number') return res.status(400).json({ error: 'recipeId required.' });
-    let users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) return res.sendStatus(404);
-    if (!user.mealplan.includes(recipeId)) user.mealplan.push(recipeId);
-    saveUsers(users);
-    res.json({ mealplan: user.mealplan });
-});
-
-// DELETE /mealplan (remove a recipe from meal plan)
-// Expects: { recipeId }
-app.delete('/mealplan', authenticateToken, (req, res) => {
-    const { recipeId } = req.body;
-    if (typeof recipeId !== 'number') return res.status(400).json({ error: 'recipeId required.' });
-    let users = getUsers();
-    const user = users.find(u => u.id === req.user.id);
+    const recipe = req.body;
+    if (!recipe || !recipe.title) {
+        return res.status(400).json({ error: 'Recipe title required.' });
+    }
+    // Load users
+    const users = JSON.parse(fs.readFileSync('users.json'));
+    // For demo, just use first user
+    const user = users[0];
+    if (!user.favorites) user.favorites = [];
+    // Prevent duplicates by title
+    if (user.favorites.some(r => r.title === recipe.title)) {
+        return res.status(400).json({ error: 'Recipe already in favorites.' });
+    }
+    // Add only the title to favorites
+    user.favorites.push({ title: recipe.title });
+    fs.writeFileSync('users.json', JSON.stringify(users, null, 2));
+    res.json({ success: true });
     if (!user) return res.sendStatus(404);
     user.mealplan = user.mealplan.filter(id => id !== recipeId);
     saveUsers(users);

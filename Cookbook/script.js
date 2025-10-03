@@ -104,34 +104,33 @@ function displayRecipes(recipes) {
 
     // Wire up Save buttons
     results.querySelectorAll('.btn.save').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const payload = {
-                title: decodeURIComponent(btn.dataset.title || ''),
-                cuisine: decodeURIComponent(btn.dataset.cuisine || ''),
-                cooking_time: decodeURIComponent(btn.dataset.time || ''),
-                instructions: decodeURIComponent(btn.dataset.instructions || '')
-            };
-            await saveRecipe(payload);
-        });
+    btn.addEventListener('click', async () => {
+      const payload = {
+        title: decodeURIComponent(btn.dataset.title || '')
+      };
+      await saveRecipe(payload);
+    });
     });
 }
 
 // -------- save to DB (via PHP) --------
 async function saveRecipe(recipe) {
-    try {
-        const form = new FormData();
-        form.append('title', recipe.title || '');
-        form.append('cuisine', recipe.cuisine || '');
-        form.append('cooking_time', recipe.cooking_time || '');
-        form.append('instructions', recipe.instructions || '');
-
-        const res = await fetch('add_recipe.php', { method: 'POST', body: form });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        alert('✅ Recipe saved to your cookbook!');
-    } catch (e) {
-        console.error(e);
-        alert('❌ Could not save recipe (are you logged in, and is add_recipe.php correct?)');
-    }
+  try {
+    // Always send only the title
+    const payload = { title: recipe.title };
+    const res = await fetch('http://localhost:3001/favorites', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    alert('✅ Recipe saved to your cookbook!');
+  } catch (e) {
+    console.error(e);
+    alert('❌ Could not save recipe (is your backend running and is /favorites endpoint implemented?)');
+  }
 }
 
 // -------- utility --------
