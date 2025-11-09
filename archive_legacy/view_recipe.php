@@ -1,0 +1,168 @@
+<<<<<<< HEAD
+<?php include 'header.php'; 
+=======
+<?php 
+>>>>>>> 3aa77ad (Initial)
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+<<<<<<< HEAD
+=======
+include 'db.php';
+>>>>>>> 3aa77ad (Initial)
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
+    <title>View Recipes</title>
+
+</head>
+<body>
+
+<h1>Saved Recipes</h1>
+
+<h2>More Options:</h2>
+<!-- Link to search by ingredient -->
+<button onclick="location.href='index.html'">Search By Ingredient</button>
+
+<button onclick="location.href='mainpage.php'">Go Back Home</button>
+
+<!-- Example of recipe listing -->
+<div id="recipes">
+   <!-- Populate this dynamically from the database -->
+   <?php
+   include 'db.php';
+   $sql_recipes = "SELECT * FROM recipes";
+   $result_recipes = $conn->query($sql_recipes);
+
+   while ($row_recipe = $result_recipes->fetch_assoc()) {
+       echo "<div class='recipe'>";
+       echo "<h3>" . htmlspecialchars($row_recipe['title']) . "</h3>";
+       echo "<p><strong>Cuisine:</strong> " . htmlspecialchars($row_recipe['cuisine']) . "</p>";
+       echo "<p><strong>Cooking Time:</strong> " . htmlspecialchars($row_recipe['cooking_time']) . " minutes</p>";
+       echo "<p><strong>Instructions:</strong> " . nl2br(htmlspecialchars($row_recipe['instructions'])) . "</p>";
+       
+       // Buttons for actions
+       echo "<button onclick=\"location.href='modify_recipe.php?recipe_id=".$row_recipe['recipe_id']."'\">More Actions</button>";
+
+=======
+    <title>Saved Recipes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fafafa;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #ff6b81;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .options {
+            text-align: center;
+            margin: 20px;
+        }
+        .options button {
+            background: #ff6b81;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .options button:hover {
+            background: #ff4757;
+        }
+        #recipes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+        .recipe {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .recipe:hover {
+            transform: scale(1.02);
+        }
+        .recipe h3 {
+            margin-top: 0;
+            color: #2f3542;
+        }
+        .recipe p {
+            margin: 5px 0;
+            color: #555;
+        }
+        .recipe button {
+            margin-top: 10px;
+            background: #1e90ff;
+            border: none;
+            padding: 8px 15px;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .recipe button:hover {
+            background: #0066cc;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🍴 Saved Recipes</h1>
+</header>
+
+<div class="options">
+    <button onclick="location.href='index.html'">🔍 Search By Ingredient</button>
+    <button onclick="location.href='mainpage.php'">🏠 Go Back Home</button>
+</div>
+
+<div id="recipes">
+   <?php
+   $sql_recipes = "SELECT * FROM recipes";
+   $result_recipes = $conn->query($sql_recipes);
+
+   if ($result_recipes && $result_recipes->num_rows > 0) {
+       while ($row_recipe = $result_recipes->fetch_assoc()) {
+           echo "<div class='recipe'>";
+           echo "<h3>" . htmlspecialchars($row_recipe['title']) . "</h3>";
+           echo "<p><strong>Cuisine:</strong> " . htmlspecialchars($row_recipe['cuisine']) . "</p>";
+           echo "<p><strong>Cooking Time:</strong> " . htmlspecialchars($row_recipe['cooking_time']) . " mins</p>";
+           echo "<p><strong>Instructions:</strong> " . nl2br(htmlspecialchars($row_recipe['instructions'])) . "</p>";
+           echo "<button onclick=\"location.href='modify_recipe.php?recipe_id=".$row_recipe['recipe_id']."'\">✏️ Edit Recipe</button>";
+           echo "</div>";
+       }
+   } else {
+       echo "<p style='text-align:center; color:#777;'>No recipes saved yet.</p>";
+>>>>>>> 3aa77ad (Initial)
+   }
+   ?>
+</div>
+
+<<<<<<< HEAD
+
+
+</body>
+</html>
+=======
+</body>
+</html>
+>>>>>>> 3aa77ad (Initial)
